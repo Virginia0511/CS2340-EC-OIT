@@ -28,31 +28,51 @@ let pollVotes = {};
 let pollActive = false;
 
 // Called every time a message comes in
-function onMessageHandler (target, context, msg, self) {
+// Called every time a message comes in
+function onMessageHandler(target, context, msg, self) {
     if (self) { return; } // Ignore messages from the bot
 
     // Remove whitespace from chat message
     const commandName = msg.trim().split(' ');
 
     // Check if it's a command and which command it is
-    switch (commandName[0]) {
+    switch (commandName[0].toLowerCase()) {
         case '!dice':
             const num = rollDice();
             client.say(target, `You rolled a ${num}`);
             console.log(`* Executed ${commandName[0]} command`);
             break;
         case '!poll':
-            if (commandName.length !== 3) {
-                client.say(target, `Usage: !poll option1 option2`);
-                return;
-            }
-            startPoll(target, commandName[1], commandName[2]);
+            // Existing poll code
             break;
         case '!vote':
-            if (!pollActive || commandName.length !== 2) {
-                return;
+            // Existing vote code
+            break;
+        case '!faq':
+            handleFAQ(target);
+            break;
+        case '!socials':
+            handleSocials(target);
+            break;
+        case '!timeout':
+            if (commandName.length === 3) {
+                const username = commandName[1].startsWith('@') ? commandName[1].substring(1) : commandName[1];
+                const duration = parseInt(commandName[2], 10);
+
+                if (!isNaN(duration)) {
+                    client.timeout(target, username, duration)
+                        .then(() => {
+                            client.say(target, `@${username} has been timed out for ${duration} seconds.`);
+                        })
+                        .catch((error) => {
+                            console.error(`Failed to timeout user: ${error}`);
+                        });
+                } else {
+                    client.say(target, `Invalid duration. Please enter a number of seconds.`);
+                }
+            } else {
+                client.say(target, `Usage: !timeout <username> <duration in seconds>`);
             }
-            recordVote(context.username, commandName[1]);
             break;
         default:
             console.log(`* Unknown command ${commandName[0]}`);
@@ -100,12 +120,12 @@ function onConnectedHandler (addr, port) {
 
 //!FAQ (im 20, from minnesota, go to SMU, CS major!)
 function handleFAQ(channel) {
-  client.say(channel, "FAQ: I'm 20, from Minnesota, go to SMU, CS major!");
+    client.say(channel, "FAQ: I'm 20, from Minnesota, go to SMU, CS major!");
 }
 
 //!Socials (link to linkedin bc professional)
 function handleSocials(channel) {
-  client.say(channel, "Check out my LinkedIn to connect professionally: [https://www.linkedin.com/in/matthewvirginia/]");
+    client.say(channel, "Check out my LinkedIn to connect professionally: [https://www.linkedin.com/in/matthewvirginia/]");
 }
 
 //!timeout <user> <time>
@@ -114,63 +134,61 @@ const userOffenses = {};
 
 //Listen for messages in the chat
 client.on("chat", (channel, user, message, self) => {
-  if (self) return; //Ignore messages from the bot itself
+    if (self) return; //Ignore messages from the bot itself
 
-  const username = user['username']; //Get the username of the message sender
+    const username = user['username']; //Get the username of the message sender
 
-  //Initialize offenses for new users
-  if (!userOffenses[username]) {
-    userOffenses[username] = 0;
-  }
-
-  //Check messages for offensive content or specific commands to trigger offenses
-  if (message.includes('offensive_word')) {
-    //Increment the offense count for the user
-    userOffenses[username]++;
-
-    //Apply timeouts based on the number of offenses
-    switch (userOffenses[username]) {
-      case 1:
-        client.timeout(channel, username, 600); //1st offense: 10 minutes timeout
-        client.say(channel, `@${username}, you've been timed out for 10 minutes for your 1st offense.`);
-        break;
-      case 2:
-        client.timeout(channel, username, 86400); //2nd offense: 24 hours timeout
-        client.say(channel, `@${username}, you've been timed out for 24 hours for your 2nd offense.`);
-        break;
-      case 3:
-        client.ban(channel, username); //3rd offense: Permanent ban
-        client.say(channel, `@${username}, you've been permanently banned for repeated offenses.`);
-        break;
-      default:
-        break;
+    //Initialize offenses for new users
+    if (!userOffenses[username]) {
+        userOffenses[username] = 0;
     }
-  }
+
+    //Check messages for offensive content or specific commands to trigger offenses
+    if (message.includes('offensive_word')) {
+        //Increment the offense count for the user
+        userOffenses[username]++;
+
+        //Apply timeouts based on the number of offenses
+        switch (userOffenses[username]) {
+            case 1:
+                client.timeout(channel, username, 600); //1st offense: 10 minutes timeout
+                client.say(channel, `@${username}, you've been timed out for 10 minutes for your 1st offense.`);
+                break;
+            case 2:
+                client.timeout(channel, username, 86400); //2nd offense: 24 hours timeout
+                client.say(channel, `@${username}, you've been timed out for 24 hours for your 2nd offense.`);
+                break;
+            case 3:
+                client.ban(channel, username); //3rd offense: Permanent ban
+                client.say(channel, `@${username}, you've been permanently banned for repeated offenses.`);
+                break;
+            default:
+                break;
+        }
+    }
 });
 
 //!Greet
 //Listen for messages in the chat
 client.on("chat", (channel, user, message, self) => {
-  if (self) return; //Ignore messages from the bot itself
+    if (self) return; //Ignore messages from the bot itself
 
-  //Parse incoming messages for commands
-  if (message.startsWith('!Greet')) {
-    const args = message.split(' ');
-    if (args.length >= 2) {
-      const username = args[1]; //Get the username to greet
-      const greetingMessage = args.slice(2).join(' '); //Get the custom greeting message
-      
-      //If no custom greeting message provided, use a default message
-      if (!greetingMessage) {
-        greetingMessage = `Welcome to the stream, @${username}!`;
-      }
+    //Parse incoming messages for commands
+    if (message.startsWith('!Greet')) {
+        const args = message.split(' ');
+        if (args.length >= 2) {
+            const username = args[1]; //Get the username to greet
+            greetingMessage = args.slice(2).join(' '); //Get the custom greeting message
 
-      //Send a custom greeting message to the specified user
-      client.say(channel, greetingMessage);
-    } else {
-      client.say(channel, "Invalid command. Use !Greet <username> <message>");
+            //If no custom greeting message provided, use a default message
+            if (!greetingMessage) {
+                greetingMessage = `Welcome to the stream, @${username}!`;
+            }
+
+            //Send a custom greeting message to the specified user
+            client.say(channel, greetingMessage);
+        } else {
+            client.say(channel, "Invalid command. Use !Greet <username> <message>");
+        }
     }
-  }
 });
-
-//
