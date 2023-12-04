@@ -23,8 +23,6 @@ client.connect().catch(e => {
     console.error('Connection error:', e);
 });
 
-
-
 let pollOptions = {};
 let pollVotes = {};
 let pollActive = false;
@@ -100,8 +98,79 @@ function onConnectedHandler (addr, port) {
     console.log(`* Connected to ${addr}:${port}`);
 }
 
-
 //!FAQ (im 20, from minnesota, go to SMU, CS major!)
+function handleFAQ(channel) {
+  client.say(channel, "FAQ: I'm 20, from Minnesota, go to SMU, CS major!");
+}
+
 //!Socials (link to linkedin bc professional)
+function handleSocials(channel) {
+  client.say(channel, "Check out my LinkedIn to connect professionally: [https://www.linkedin.com/in/matthewvirginia/]");
+}
+
 //!timeout <user> <time>
+//Create an object to store user offenses and timeouts
+const userOffenses = {};
+
+//Listen for messages in the chat
+client.on("chat", (channel, user, message, self) => {
+  if (self) return; //Ignore messages from the bot itself
+
+  const username = user['username']; //Get the username of the message sender
+
+  //Initialize offenses for new users
+  if (!userOffenses[username]) {
+    userOffenses[username] = 0;
+  }
+
+  //Check messages for offensive content or specific commands to trigger offenses
+  if (message.includes('offensive_word')) {
+    //Increment the offense count for the user
+    userOffenses[username]++;
+
+    //Apply timeouts based on the number of offenses
+    switch (userOffenses[username]) {
+      case 1:
+        client.timeout(channel, username, 600); //1st offense: 10 minutes timeout
+        client.say(channel, `@${username}, you've been timed out for 10 minutes for your 1st offense.`);
+        break;
+      case 2:
+        client.timeout(channel, username, 86400); //2nd offense: 24 hours timeout
+        client.say(channel, `@${username}, you've been timed out for 24 hours for your 2nd offense.`);
+        break;
+      case 3:
+        client.ban(channel, username); //3rd offense: Permanent ban
+        client.say(channel, `@${username}, you've been permanently banned for repeated offenses.`);
+        break;
+      default:
+        break;
+    }
+  }
+});
+
+//!Greet
+//Listen for messages in the chat
+client.on("chat", (channel, user, message, self) => {
+  if (self) return; //Ignore messages from the bot itself
+
+  //Parse incoming messages for commands
+  if (message.startsWith('!Greet')) {
+    const args = message.split(' ');
+    if (args.length >= 2) {
+      const username = args[1]; //Get the username to greet
+      const greetingMessage = args.slice(2).join(' '); //Get the custom greeting message
+      
+      //If no custom greeting message provided, use a default message
+      if (!greetingMessage) {
+        greetingMessage = `Welcome to the stream, @${username}!`;
+      }
+
+      //Send a custom greeting message to the specified user
+      client.say(channel, greetingMessage);
+    } else {
+      client.say(channel, "Invalid command. Use !Greet <username> <message>");
+    }
+  }
+});
+
 //
