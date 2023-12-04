@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Token Capture</title>
+</head>
+<body>
+<h1>OAuth Token Capture</h1>
+<div id="token"></div>
+<script>
+    window.onload = function() {
+        // Parse the URL fragment (hash) to get the access token
+        var hash = window.location.hash.substring(1); // Get the hash part of the URL
+        var params = new URLSearchParams(hash); // Treat it as a query string
+        var accessToken = params.get('access_token'); // Get the access token from it
+
+        // Display the token on the page
+        document.getElementById('token').textContent = 'Access Token: ' + accessToken;
+    };
+</script>
+</body>
+</html>
