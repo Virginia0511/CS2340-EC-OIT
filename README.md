@@ -2,8 +2,6 @@
 2023 CS2340 Extra Credit OIT assignment
 Matthew Virginia and Harrison Stein
 
-DUE DECEMBER 4TH!
-
 Creating a raspberry-pi (Raspberry Pi Zero 2 W) based Twitchbot that has the same functions as a mod:
 
 Twitch Developer Account: Necessary for client ID and secret which will allow bot to interact with the Twitch API
