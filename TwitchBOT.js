@@ -27,26 +27,38 @@ let pollOptions = {};
 let pollVotes = {};
 let pollActive = false;
 
-// Called every time a message comes in
+// Define an array of profane words
+const profanityArray = ['badword1', 'badword2', 'badword3'];
+
 // Called every time a message comes in
 function onMessageHandler(target, context, msg, self) {
     if (self) { return; } // Ignore messages from the bot
 
+    // Convert message to lowercase and check for profanity
+    const lowerCaseMsg = msg.toLowerCase().trim();
+    
     // Remove whitespace from chat message
-    const commandName = msg.trim().split(' ');
+    const commandName = lowerCaseMsg.trim().split(' ');
 
     // Check if it's a command and which command it is
-    switch (commandName[0].toLowerCase()) {
+    switch (commandName[0]) {
         case '!dice':
             const num = rollDice();
             client.say(target, `You rolled a ${num}`);
             console.log(`* Executed ${commandName[0]} command`);
             break;
         case '!poll':
-            // Existing poll code
+            if (commandName.length !== 3) {
+                client.say(target, `Usage: !poll option1 option2`);
+                return;
+            }
+            startPoll(target, commandName[1], commandName[2]);
             break;
         case '!vote':
-            // Existing vote code
+            if (!pollActive || commandName.length !== 2) {
+                return;
+            }
+            recordVote(context.username, commandName[1]);
             break;
         case '!faq':
             handleFAQ(target);
@@ -128,11 +140,7 @@ function handleSocials(channel) {
     client.say(channel, "Check out my LinkedIn to connect professionally: [https://www.linkedin.com/in/matthewvirginia/]");
 }
 
-//!timeout <user> <time>
-//Create an object to store user offenses and timeouts
-const userOffenses = {};
-
-//Listen for messages in the chat
+// Listen for messages in the chat
 client.on("chat", (channel, user, message, self) => {
     if (self) return; //Ignore messages from the bot itself
 
@@ -164,31 +172,6 @@ client.on("chat", (channel, user, message, self) => {
                 break;
             default:
                 break;
-        }
-    }
-});
-
-//!Greet
-//Listen for messages in the chat
-client.on("chat", (channel, user, message, self) => {
-    if (self) return; //Ignore messages from the bot itself
-
-    //Parse incoming messages for commands
-    if (message.startsWith('!Greet')) {
-        const args = message.split(' ');
-        if (args.length >= 2) {
-            const username = args[1]; //Get the username to greet
-            greetingMessage = args.slice(2).join(' '); //Get the custom greeting message
-
-            //If no custom greeting message provided, use a default message
-            if (!greetingMessage) {
-                greetingMessage = `Welcome to the stream, @${username}!`;
-            }
-
-            //Send a custom greeting message to the specified user
-            client.say(channel, greetingMessage);
-        } else {
-            client.say(channel, "Invalid command. Use !Greet <username> <message>");
         }
     }
 });
